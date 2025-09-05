@@ -12,20 +12,22 @@ namespace MissionControlSimulator.src.Service
 
         public UsersService()
         {
-            var client = new MongoClient("mongodb://localhost:27017"); // כתובת MongoDB
-            var database = client.GetDatabase("MissionControlDB");      // שם מסד הנתונים
-            _usersCollection = database.GetCollection<User>("Users");  // שם הקולקשן
+            var client = new MongoClient("mongodb://localhost:27017");
+            var database = client.GetDatabase("MissionControlDB");
+            _usersCollection = database.GetCollection<User>("Users");
         }
+public async Task<List<User>> GetDeletedUsersAsync() =>
+    await _usersCollection.Find(u => u.IsDeleted).ToListAsync();
 
-        // קבלת כל המשתמשים // GET ALL USERS
-        public async Task<List<User>> GetAsync() => 
-            await _usersCollection.Find(a => true).ToListAsync();
+        // Get all users
+        public async Task<List<User>> GetAsync() =>
+            await _usersCollection.Find(u => true).ToListAsync();
 
-        // קבלת משתמש לפי id // GET USER BY ID
-        public async Task<User?> GetAsync(string id) => 
-            await _usersCollection.Find(a => a.Id == id).FirstOrDefaultAsync();
+        // Get user by id
+        public async Task<User?> GetAsync(string id) =>
+            await _usersCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
 
-        // יצירת משתמש חדש // CREATE USER
+        // Create new user
         public async Task<User> CreateAsync(User user)
         {
             user.Id ??= MongoDB.Bson.ObjectId.GenerateNewId().ToString();
@@ -36,7 +38,7 @@ namespace MissionControlSimulator.src.Service
             return user;
         }
 
-        // עדכון משתמש קיים // UPDATE USER
+        // Update user
         public async Task<bool> UpdateAsync(string id, User userIn)
         {
             userIn.UpdatedAt = DateTime.UtcNow;
@@ -44,14 +46,53 @@ namespace MissionControlSimulator.src.Service
             return result.ModifiedCount > 0;
         }
 
-        // מחיקת משתמש לפי id // DELETE USER
-        public async Task<bool> RemoveAsync(string id)
+        // Soft delete user
+        public async Task<bool> SoftDeleteAsync(string id)
         {
             var user = await _usersCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
             if (user == null) return false;
 
-            var result = await _usersCollection.DeleteOneAsync(u => u.Id == id);
-            return result.DeletedCount > 0;
+            user.IsDeleted = true;
+            user.DeletedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _usersCollection.ReplaceOneAsync(u => u.Id == id, user);
+            return result.ModifiedCount > 0;
+        }
+
+        // Restore user with rules (user/admin)
+        public async Task<bool> RestoreAsync(string id, string requesterRole, bool isOwner, int restoreWindowDays = 7)
+        {
+            var user = await _usersCollection.Find(u => u.Id == id).FirstOrDefaultAsync();
+            if (user == null || !user.IsDeleted) return false;
+
+            var now = DateTime.UtcNow;
+
+            if (requesterRole != "Admin")
+            {
+                // User can restore only own account and within X days
+                if (!isOwner || user.DeletedAt == null || (now - user.DeletedAt.Value).TotalDays > restoreWindowDays)
+                    return false;
+            }
+
+            user.IsDeleted = false;
+            user.DeletedAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            var result = await _usersCollection.ReplaceOneAsync(u => u.Id == id, user);
+            return result.ModifiedCount > 0;
+        }
+
+        // Purge permanently deleted users older than X days
+        public async Task PurgeDeletedUsersAsync(int daysLimit = 7)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-daysLimit);
+            var filter = Builders<User>.Filter.And(
+                Builders<User>.Filter.Eq(u => u.IsDeleted, true),
+                Builders<User>.Filter.Lt(u => u.DeletedAt, cutoff)
+            );
+
+            await _usersCollection.DeleteManyAsync(filter);
         }
     }
 }

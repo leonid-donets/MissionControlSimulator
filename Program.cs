@@ -1,3 +1,5 @@
+using MissionControlSimulator.src.Service;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // הוספת שירותי Swagger
@@ -6,6 +8,7 @@ builder.Services.AddSwaggerGen();
 
 // הוספת שירותי Controller
 builder.Services.AddControllers();  // <--- חשוב!!!
+builder.Services.AddSingleton<UsersService>();
 
 var app = builder.Build();
 

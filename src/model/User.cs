@@ -16,21 +16,24 @@ namespace MissionControlSimulator.src.model
     public class User
     {
 
-        public string? Id { get; set; }
+    public string? Id { get; set; }
 
-        [Required(ErrorMessage = "Username is required")]
-        [StringLength(30, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 30 characters")]
-        public string Username { get; set; }
+    [Required]
+    [StringLength(30, MinimumLength = 3)]
+    public string Username { get; set; }
 
-        [Required(ErrorMessage = "Password is required")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long")]
-        public string PasswordHash { get; set; }
+    [Required]
+    [StringLength(100, MinimumLength = 6)]
+    public string PasswordHash { get; set; }
 
-        [Required(ErrorMessage = "Role is required")]
-        [RegularExpression("Admin|User", ErrorMessage = "Role must be either 'Admin' or 'User'")]
-        public string UserRole { get; set; }
-        public DateTime CreatedAt { get; set; }   // תאריך יצירה
-        public DateTime UpdatedAt { get; set; }   // תאריך עדכון אחרון
+    [Required]
+    [RegularExpression("Admin|User")]
+    public string UserRole { get; set; }
+
+    public bool IsDeleted { get; set; } = false;          // מחיקה רכה
+    public DateTime? DeletedAt { get; set; }              // מתי נעשתה המחיקה
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
 
     }
