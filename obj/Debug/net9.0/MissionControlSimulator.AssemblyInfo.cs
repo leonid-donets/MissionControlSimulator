@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MissionControlSimulator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3714f201aa5b975e96698940e86da68e429fd427")]
 [assembly: System.Reflection.AssemblyProductAttribute("MissionControlSimulator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MissionControlSimulator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
