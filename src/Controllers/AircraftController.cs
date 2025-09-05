@@ -19,16 +19,16 @@ namespace MissionControlSimulator.src.Controllers
         {
             return Ok(_service.Get());
         }
-[HttpPost]
-[Authorize(Roles = "Admin")]   //רק אדמין יכול ליצור מטוס חדש //  only admin can create new aircraft
-public IActionResult CreateAircraft([FromBody] Aircraft aircraft)
-{
-    aircraft.CreatedAt = DateTime.UtcNow;
-    aircraft.UpdatedAt = DateTime.UtcNow;
+        [HttpPost]
+        [Authorize(Roles = "Admin")]   //רק אדמין יכול ליצור מטוס חדש //  only admin can create new aircraft
+        public IActionResult CreateAircraft([FromBody] Aircraft aircraft)
+        {
+            aircraft.CreatedAt = DateTime.UtcNow;
+            aircraft.UpdatedAt = DateTime.UtcNow;
 
-    _service.Create(aircraft);
-    return Ok(aircraft);
-}
+            _service.Create(aircraft);
+            return Ok(aircraft);
+        }
 
 
         [HttpDelete("{id}")]

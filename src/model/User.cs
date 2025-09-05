@@ -6,17 +6,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MissionControlSimulator.src.model
 {
-    
+
     public enum UserRole
-{
-    Admin,
-    User
-}
+    {
+        Admin,
+        User
+    }
 
     public class User
     {
 
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [Required(ErrorMessage = "Username is required")]
         [StringLength(30, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 30 characters")]
@@ -29,6 +29,9 @@ namespace MissionControlSimulator.src.model
         [Required(ErrorMessage = "Role is required")]
         [RegularExpression("Admin|User", ErrorMessage = "Role must be either 'Admin' or 'User'")]
         public string UserRole { get; set; }
+        public DateTime CreatedAt { get; set; }   // תאריך יצירה
+        public DateTime UpdatedAt { get; set; }   // תאריך עדכון אחרון
+
 
     }
 }
