@@ -1,31 +1,92 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using MissionControlSimulator.src.Service;
+using MissionControlSimulator.src.Hubs;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// הוספת שירותי Swagger
+// ======= Services =======
+builder.Services.AddControllers();
+builder.Services.AddSingleton<UsersService>();
+builder.Services.AddSingleton<MissionService>();
+
+// SignalR
+builder.Services.AddSignalR();
+
+// JWT Authentication
+var secret = builder.Configuration["JwtSettings:Secret"];
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret))
+    };
+
+    // SignalR token from query string
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/mission"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
+});
+
+// Authorization
+builder.Services.AddAuthorization();
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// הוספת שירותי Controller
-builder.Services.AddControllers();  // <--- חשוב!!!
-builder.Services.AddSingleton<UsersService>();
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // הכתובת של ה‑frontend שלך
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 
-// הפעלת Swagger במצב פיתוח
+// ======= Middleware =======
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// הפעלת Routing ל-Controllers
-app.MapControllers();  // <--- חשוב!!!
+app.UseCors();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
+// ======= Map Endpoints =======
+app.MapControllers();
+app.MapHub<MissionHub>("/hubs/mission");
+
+// ======= Run =======
 Console.BackgroundColor = ConsoleColor.Green;
 Console.WriteLine("Now listening on: http://localhost:5155");
-Console.BackgroundColor = ConsoleColor.DarkBlue;
-Console.WriteLine("http://localhost:5155/api/aircraft");
 Console.ResetColor();
 
 app.Run();
