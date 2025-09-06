@@ -1,0 +1,6 @@
+@MissionControlSimulator_HostAddress = http://localhost:5155
+
+GET {{MissionControlSimulator_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
