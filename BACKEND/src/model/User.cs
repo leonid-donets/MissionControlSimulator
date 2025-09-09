@@ -11,7 +11,11 @@ namespace MissionControlSimulator.src.Models
 
         [Required]
         [StringLength(30, MinimumLength = 3)]
-        public string Username { get; set; }
+        public string Username { get; set; }  // שם משתמש ייחודי
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }     // מייל ייחודי
 
         [Required]
         [StringLength(100, MinimumLength = 6)]

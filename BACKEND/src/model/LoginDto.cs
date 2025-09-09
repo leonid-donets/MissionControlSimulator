@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace MissionControlSimulator.src.model
 {
     public class LoginDto
     {
-             public string Username { get; set; }
+        public string UsernameOrEmail { get; set; } // יכול להיות שם משתמש או מייל
         public string Password { get; set; }
     }
 }

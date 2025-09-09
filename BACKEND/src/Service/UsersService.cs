@@ -67,6 +67,11 @@ namespace MissionControlSimulator.src.Service
             var result = await _usersCollection.ReplaceOneAsync(u => u.Id == id, user);
             return result.ModifiedCount > 0;
         }
+        public async Task<User?> FindByUsernameOrEmailAsync(string usernameOrEmail) =>
+            await _usersCollection
+                .Find(u => (u.Username == usernameOrEmail || u.Email == usernameOrEmail) && !u.IsDeleted)
+                .FirstOrDefaultAsync();
+
     }
 }
 // using System;

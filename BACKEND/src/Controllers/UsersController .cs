@@ -28,29 +28,56 @@ namespace MissionControlSimulator.src.Controllers
         private bool VerifyPassword(string password, string hash) =>
             BCrypt.Net.BCrypt.Verify(password, hash);
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
-        {
-            var user = await _service.FindByUsernameAsync(dto.Username);
-            if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
-                return Unauthorized();
+        // [HttpPost("login")]
+        // public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        // {
+        //     var user = await _service.FindByUsernameAsync(dto.Username);
+        //     if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
+        //         return Unauthorized();
 
-            var claims = new[]
-            {
-                new Claim("id", user.Id),
-                new Claim(ClaimTypes.Role, user.UserRole)
-            };
+        //     var claims = new[]
+        //     {
+        //         new Claim("id", user.Id),
+        //         new Claim(ClaimTypes.Role, user.UserRole)
+        //     };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(6),
-                signingCredentials: creds
-            );
+        //     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+        //     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        //     var token = new JwtSecurityToken(
+        //         claims: claims,
+        //         expires: DateTime.UtcNow.AddHours(6),
+        //         signingCredentials: creds
+        //     );
 
-            return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
-        }
+        //     return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+        // }
+[HttpPost("login")]
+public async Task<IActionResult> Login([FromBody] LoginDto dto)
+{
+    // מחפשים משתמש לפי שם משתמש או מייל
+    var user = await _service.FindByUsernameOrEmailAsync(dto.UsernameOrEmail);
+
+    // אם לא קיים או הסיסמה לא תואמת
+    if (user == null || !VerifyPassword(dto.Password, user.PasswordHash))
+        return Unauthorized();
+
+    // יצירת טוקן JWT עם תפקיד ו-ID
+    var claims = new[]
+    {
+        new Claim("id", user.Id),
+        new Claim(ClaimTypes.Role, user.UserRole)
+    };
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var token = new JwtSecurityToken(
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(6),
+        signingCredentials: creds
+    );
+
+    return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+}
 
         [HttpGet("deleted")]
         [Authorize(Roles = "Admin")]
